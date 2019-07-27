@@ -12,13 +12,19 @@
     <sprite>sprites\spr_foot_left</sprite>
     <sprite>sprites\spr_hand</sprite>
     <sprite>sprites\spr_block</sprite>
+    <sprite>sprites\spr_josh_head</sprite>
   </sprites>
-  <backgrounds name="background"/>
+  <backgrounds name="background">
+    <background>background\bg_background</background>
+    <background>background\bg_spotlights</background>
+  </backgrounds>
   <paths name="paths"/>
   <scripts name="scripts">
     <script>scripts\Init.gml</script>
     <script>scripts\InitFighters.gml</script>
     <script>scripts\CreateTemplateFighter.gml</script>
+    <script>scripts\IsPunching.gml</script>
+    <script>scripts\SpawnEnemy.gml</script>
   </scripts>
   <objects name="objects">
     <object>objects\obj_fighter</object>
@@ -28,6 +34,7 @@
     <object>objects\obj_block</object>
     <object>objects\obj_player_controller</object>
     <object>objects\obj_controller</object>
+    <object>objects\obj_ai_controller</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\rm_init</room>

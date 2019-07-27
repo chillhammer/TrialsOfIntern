@@ -49,6 +49,62 @@ image_speed = 0;
             <kind>1</kind>
             <string>/// Variables
 owner = noone;
+target_x = 0;
+target_y = 0;
+punching = false;
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="3" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Lerp TO POsition
+x = lerp(x, target_x, game_speed);
+y = lerp(y, target_y, game_speed);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="4" ename="obj_fighter">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Punching Fighter
+if (other.ally != owner.ally &amp;&amp; punching) {
+    var dir = owner.aim_dir;//point_direction(x, y, other.x, other.y);
+    other.hsp = lengthdir_x(10, dir);
+    other.vsp = lengthdir_y(10, dir);
+}
 </string>
           </argument>
         </arguments>

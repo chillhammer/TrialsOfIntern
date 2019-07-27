@@ -64,7 +64,18 @@ with (fighter) {
     }  else {
         input_hor = 0;
     }
+    if (keyboard_check_pressed(vk_space)) {
+        event_perform(ev_other, ev_user3);
+    }
+    
+    if (mouse_check_button_pressed(mb_left)) {
+        event_perform(ev_other, ev_user4);
+    }
+    
+    aim_x = mouse_x;
+    aim_y = mouse_y;
 }
+
 </string>
           </argument>
         </arguments>

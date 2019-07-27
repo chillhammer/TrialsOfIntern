@@ -3,7 +3,7 @@
   <spriteName>spr_body</spriteName>
   <solid>0</solid>
   <visible>-1</visible>
-  <depth>0</depth>
+  <depth>10</depth>
   <persistent>0</persistent>
   <parentName>&lt;undefined&gt;</parentName>
   <maskName>&lt;undefined&gt;</maskName>
@@ -39,7 +39,7 @@ head.owner = self;
 punch_dist = 0;
 
 punch_timer = 0;
-punch_time = room_speed * 0.6;
+punch_time = room_speed * 0.4;
 
 input_hor = 0;
 max_speed_base = 5;
@@ -50,13 +50,22 @@ max_jump = max_jump_base;
 
 size = 1;
 head_size = 1;
+hand_size = 1;
+punch_length = 1;
 
 aim_x = 0;
 aim_y = 0;
 
+hsp = 0;
+vsp = 0;
+
+ally = true;
+
+aim_dir = 0;
+
 // Example
-fighterName = "Kenneth";
-stats = global.fighters[?"Kenneth"];
+fighterName = "Josh";
+stats = global.fighters[?"Josh"];
 
 // DEBUG : Setting to character
 event_perform(ev_other, ev_user0);
@@ -82,37 +91,68 @@ event_perform(ev_other, ev_user0);
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>/// Input
+            <string>/// Physics
 var i_hor = input_hor;
 
-hspeed = clamp(hspeed, -max_speed, max_speed);
-hspeed += i_hor * 0.3;
+hsp = clamp(hsp, -max_speed, max_speed);
+hsp += i_hor * 0.3 * game_speed;
 if (i_hor == 0)
-    hspeed /= 1.1;
+    hsp /= (1 + 0.1* game_speed);
 
-if (aim_x != x)
+if (aim_x != x &amp;&amp; punch_timer == 0)
     facing = sign(aim_x - x);
 image_xscale = facing * abs(image_xscale);
     
 
-if (mouse_check_button_pressed(mb_left)) {
-    punch_timer = punch_time;
+if (place_meeting(x + hsp, y, obj_block) &amp;&amp; !place_meeting(x, y, obj_block)) {
+    x = xprevious;
+    x -= hsp;
+    hsp = -hsp;
+    input_hor = -input_hor;
 }
-
-var onGround = place_meeting(x, y + 16, obj_block);
+var moveOffset = 0;
+if (input_hor != 0) moveOffset = 0;
+var onGround = instance_place(x, y + 4 + moveOffset, obj_block);
 if (onGround) {
-    vspeed = 0;
-    while (onGround) {
-        y -= 1;
-        onGround = place_meeting(x, y + 16, obj_block);
+    if (vsp &lt; 0) {
+        y = yprevious;
+        vsp = -vsp;
+    } else {
+        vsp = 0;
+        while (onGround) {
+            y -= 1;
+            onGround = instance_place(x, y + 4 + moveOffset, obj_block);
+        }
+        y++;
     }
-    y++;
 } else {
-    vspeed += 0.4;
-    if (vspeed &gt; 0)
-        vspeed += 0.4;
+    vsp += 0.4 * game_speed;
+    if (vsp &gt; 0)
+        vsp += 0.4 * game_speed;
 }
-
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Simple HSP and VSP
+x += hsp * game_speed;
+y += vsp * game_speed;
 </string>
           </argument>
         </arguments>
@@ -137,6 +177,8 @@ if (onGround) {
             <kind>1</kind>
             <string>/// Punch
 punch_timer = punch_time;
+aim_dir = point_direction(x, y, aim_x, aim_y);
+facing = sign(aim_x - x);
 </string>
           </argument>
         </arguments>
@@ -160,8 +202,8 @@ punch_timer = punch_time;
           <argument>
             <kind>1</kind>
             <string>/// Jump
-vspeed = max_jump;
-y -= 10;   
+vsp = max_jump;
+y -= 10 * game_speed;
 </string>
           </argument>
         </arguments>
@@ -236,6 +278,9 @@ input_hor = 1;
 stats = global.fighters[?fighterName];
 size = stats[?"size"];
 head_size = stats[?"head_size"];
+hand_size = stats[?"hand_size"];
+
+head.sprite_index = stats[?"head_spr"];
 </string>
           </argument>
         </arguments>
@@ -259,32 +304,42 @@ head_size = stats[?"head_size"];
           <argument>
             <kind>1</kind>
             <string>draw_self();
-left_arm.x = x - 16;
-left_arm.y = y;
-right_arm.x = x + 16;
-right_arm.y = y;
+left_arm.target_x = x - 24 + (facing == -1) * 6;
+left_arm.target_y = y;
+right_arm.target_x = x + 24 - (facing == 1) * 6;;
+right_arm.target_y = y;
 
-left_arm.image_xscale = size * facing;
-right_arm.image_xscale = size * facing;
+
+if (punch_timer == 0)
+    aim_dir = point_direction(x, y, aim_x, aim_y);
 
 // Head Bob
-head.y = y - 16 + sin(current_time / 100)* 1;
+head.y = y - 10 + sin(current_time / 50)* 1;
 head.x = x;
 head.image_xscale = size * facing * head_size
+with (head) {
+    draw_self();
+    image_angle = other.aim_dir;
+    //image_angle = point_direction(x, y, other.aim_x, other.aim_y);;
+    if (image_xscale &lt; 0) image_angle += 180;
+}
 
 // Feet
 var skinType = stats[?"skin_type"];
 var bobOffset = 0;
-if (hspeed != 0) 
-    bobOffset = sin(current_time / 3) * hspeed * 0.5;
+if (hsp != 0) {
+    var bobSpdMod = 10 * (1 / game_speed);
+    if (game_speed == 1) bobSpdMod = 1;
+    bobOffset = sin(current_time / (3 * bobSpdMod)) * hsp * 0.5;
+}
 
 var l_foot_y = y + 8 + bobOffset;
 var l_foot_x = x - 4 * facing;
 
 draw_sprite_ext(spr_foot_left, skinType, l_foot_x, l_foot_y, size * facing, size, 0, c_white, image_alpha);
 
-if (hspeed != 0) 
-    bobOffset = sin(current_time / 3 + 100) * -hspeed * 0.5;
+if (hsp != 0) 
+    bobOffset = sin(current_time / (3 * bobSpdMod) + 100) * -hsp * 0.5;
     
 var r_foot_y = y + 8 + bobOffset;
 var r_foot_x = x + 4 * facing;
@@ -292,27 +347,53 @@ var r_foot_x = x + 4 * facing;
 draw_sprite_ext(spr_foot_right, skinType, r_foot_x, r_foot_y, size * facing, size, 0, c_white, image_alpha);
 
 
+// Punch Hand Movement
+right_arm.punching = false;
+left_arm.punching = false;
+
 if (punch_timer != 0) {
-    punch_timer--;
+    punch_timer -= game_speed;
     var perc = abs(punch_time - punch_timer) / punch_time;
-    if (perc &lt; 0.2) {
-        punch_dist = lerp(0, 80, perc / 0.2);
+    if (perc &lt; 0.4) {
+        punch_dist = lerp(0, 80 * punch_length, perc / 0.4);
+        if (facing == 1) 
+            right_arm.punching = true;
+        else
+            left_arm.punching = true;
     } else {
-        punch_dist = lerp(80, 0, (perc - 0.2) / 0.8);
+        punch_dist = lerp(80 * punch_length, 0, (perc - 0.4) / 0.6);
     }
-    punch_dist *= facing;
+    //punch_dist *= facing;
 }
-var aim_dir = point_direction(x, y, aim_x, aim_y);
 
 if (facing == 1) {
-    right_arm.x += punch_dist;
+    right_arm.target_x += lengthdir_x( punch_dist, aim_dir);
+    right_arm.target_y += lengthdir_y( punch_dist, aim_dir);
     right_arm.image_angle = aim_dir;
+    if (right_arm.image_xscale &lt; 0) right_arm.image_angle += 180;
     left_arm.image_angle = 0;
 } else {
-    left_arm.x += punch_dist;
+    left_arm.target_x += lengthdir_x( punch_dist, aim_dir);
+    left_arm.target_y += lengthdir_y( punch_dist, aim_dir);
     left_arm.image_angle = aim_dir;
+    if (left_arm.image_xscale &lt; 0) left_arm.image_angle += 180;
     right_arm.image_angle = 0;
 }
+if (facing != abs(left_arm.image_xscale) || facing != abs(right_arm.image_xscale)) {
+    //left_arm.x = left_arm.target_x;
+    //left_arm.y = left_arm.target_y;
+    //right_arm.x = right_arm.target_x;
+    //right_arm.y = right_arm.target_y;
+}
+
+// Common Arm Settings
+left_arm.image_xscale = size * facing * hand_size;
+right_arm.image_xscale = size * facing * hand_size;
+left_arm.image_yscale = size *  hand_size;
+right_arm.image_yscale = size *  hand_size;
+
+left_arm.image_index = skinType;
+right_arm.image_index = skinType;
 </string>
           </argument>
         </arguments>
