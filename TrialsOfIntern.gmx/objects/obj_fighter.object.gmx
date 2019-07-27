@@ -46,12 +46,20 @@ max_speed_base = 5;
 max_speed = max_speed_base;
 
 max_jump_base = -8;
-max_jump = max_jump_basep;
+max_jump = max_jump_base;
 
-
+size = 1;
+head_size = 1;
 
 aim_x = 0;
 aim_y = 0;
+
+// Example
+fighterName = "Kenneth";
+stats = global.fighters[?"Kenneth"];
+
+// DEBUG : Setting to character
+event_perform(ev_other, ev_user0);
 </string>
           </argument>
         </arguments>
@@ -82,25 +90,21 @@ hspeed += i_hor * 0.3;
 if (i_hor == 0)
     hspeed /= 1.1;
 
-if (mouse_x != x)
+if (aim_x != x)
     facing = sign(aim_x - x);
-image_xscale = facing;
+image_xscale = facing * abs(image_xscale);
     
-if (keyboard_check_pressed(vk_space)) {
-    vspeed = -8;
-    y -= 10;
-}
 
 if (mouse_check_button_pressed(mb_left)) {
     punch_timer = punch_time;
 }
 
-var onGround = place_meeting(x, y + 48, obj_block);
+var onGround = place_meeting(x, y + 16, obj_block);
 if (onGround) {
     vspeed = 0;
     while (onGround) {
         y -= 1;
-        onGround = place_meeting(x, y + 48, obj_block);
+        onGround = place_meeting(x, y + 16, obj_block);
     }
     y++;
 } else {
@@ -109,6 +113,30 @@ if (onGround) {
         vspeed += 0.4;
 }
 
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="14">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Punch
+punch_timer = punch_time;
 </string>
           </argument>
         </arguments>
@@ -134,6 +162,30 @@ if (onGround) {
             <string>/// Jump
 vspeed = max_jump;
 y -= 10;   
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="12">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Move Left
+input_hor = -1;
 </string>
           </argument>
         </arguments>
@@ -181,7 +233,86 @@ input_hor = 1;
           <argument>
             <kind>1</kind>
             <string>/// Setting To Character
+stats = global.fighters[?fighterName];
+size = stats[?"size"];
+head_size = stats[?"head_size"];
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="8" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>draw_self();
+left_arm.x = x - 16;
+left_arm.y = y;
+right_arm.x = x + 16;
+right_arm.y = y;
 
+left_arm.image_xscale = size * facing;
+right_arm.image_xscale = size * facing;
+
+// Head Bob
+head.y = y - 16 + sin(current_time / 100)* 1;
+head.x = x;
+head.image_xscale = size * facing * head_size
+
+// Feet
+var skinType = stats[?"skin_type"];
+var bobOffset = 0;
+if (hspeed != 0) 
+    bobOffset = sin(current_time / 3) * hspeed * 0.5;
+
+var l_foot_y = y + 8 + bobOffset;
+var l_foot_x = x - 4 * facing;
+
+draw_sprite_ext(spr_foot_left, skinType, l_foot_x, l_foot_y, size * facing, size, 0, c_white, image_alpha);
+
+if (hspeed != 0) 
+    bobOffset = sin(current_time / 3 + 100) * -hspeed * 0.5;
+    
+var r_foot_y = y + 8 + bobOffset;
+var r_foot_x = x + 4 * facing;
+
+draw_sprite_ext(spr_foot_right, skinType, r_foot_x, r_foot_y, size * facing, size, 0, c_white, image_alpha);
+
+
+if (punch_timer != 0) {
+    punch_timer--;
+    var perc = abs(punch_time - punch_timer) / punch_time;
+    if (perc &lt; 0.2) {
+        punch_dist = lerp(0, 80, perc / 0.2);
+    } else {
+        punch_dist = lerp(80, 0, (perc - 0.2) / 0.8);
+    }
+    punch_dist *= facing;
+}
+var aim_dir = point_direction(x, y, aim_x, aim_y);
+
+if (facing == 1) {
+    right_arm.x += punch_dist;
+    right_arm.image_angle = aim_dir;
+    left_arm.image_angle = 0;
+} else {
+    left_arm.x += punch_dist;
+    left_arm.image_angle = aim_dir;
+    right_arm.image_angle = 0;
+}
 </string>
           </argument>
         </arguments>

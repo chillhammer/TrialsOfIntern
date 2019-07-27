@@ -26,6 +26,8 @@
     <object>objects\obj_hand</object>
     <object>objects\obj_head</object>
     <object>objects\obj_block</object>
+    <object>objects\obj_player_controller</object>
+    <object>objects\obj_controller</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\rm_init</room>
