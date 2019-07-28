@@ -29,6 +29,10 @@
 
 // Spawn player
 fighter = instance_create(x, y, obj_fighter);
+fighter.fighterName = global.fighterPlayerName;
+with (fighter) {
+    event_perform(ev_other, ev_user0);
+}
 
 </string>
           </argument>

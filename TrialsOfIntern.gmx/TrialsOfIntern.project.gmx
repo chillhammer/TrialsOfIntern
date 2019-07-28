@@ -13,6 +13,7 @@
     <sprite>sprites\spr_hand</sprite>
     <sprite>sprites\spr_block</sprite>
     <sprite>sprites\spr_josh_head</sprite>
+    <sprite>sprites\spr_kait_head</sprite>
   </sprites>
   <backgrounds name="background">
     <background>background\bg_background</background>

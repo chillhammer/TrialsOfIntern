@@ -69,13 +69,40 @@ hp = 100;
 aim_dir = 0;
 
 deathTimer = 0;
+owner = noone;
 
 // Example
-fighterName = "Josh";
+fighterName = "Josh"; // player uses global.fighterPlayerName
 stats = global.fighters[?"Josh"];
 
 // DEBUG : Setting to character
 event_perform(ev_other, ev_user0);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="1" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>with (left_arm)
+    instance_destroy();
+with (right_arm)
+    instance_destroy();
 </string>
           </argument>
         </arguments>
@@ -216,6 +243,9 @@ if (y &gt; room_height) {
           <argument>
             <kind>1</kind>
             <string>///Death Check
+if (deathTimer &gt; 0) {
+    deathTimer += game_speed;
+}
 if (hp &lt;= 0 &amp;&amp; !IsDead(self)) {
     event_perform(ev_other, ev_user5);
 }

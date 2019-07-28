@@ -13,5 +13,6 @@ with( inst ){
                 
         }
     }
+    owner = other;
 }
 return inst.fighter;

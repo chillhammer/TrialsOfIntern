@@ -52,7 +52,7 @@ head_spin_speed = 0;
           <argument>
             <kind>1</kind>
             <string>/// Death
-if (IsDead(owner)) {
+if (!instance_exists(owner) || IsDead(owner)) {
     vspeed += 0.08;
     image_angle += head_spin_speed;
 }

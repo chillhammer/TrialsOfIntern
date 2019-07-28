@@ -39,6 +39,10 @@ remaining_enemies_names = ds_list_create();
 ds_list_copy(remaining_enemies_names, global.fightersNames);
 ds_list_shuffle(remaining_enemies_names);
 
+var index = ds_list_find_index(remaining_enemies_names, global.fighterPlayerName);
+if (index != -1)
+    ds_list_delete(remaining_enemies_names, index);
+
 game_start = false;
 enable_campaign = true;
 
@@ -147,9 +151,10 @@ if (instance_exists(enemy)) {
             c = c_gray;
             if (mouse_check_button_pressed(mb_left)) {
                 enemy.ally = true;
-                ds_list_add(enemy);
+                ds_list_add(allies, enemy);
                 enemy = noone;
                 alarm[0] = room_speed * 2; // Next Round
+                exit;
             }
         }
         draw_set_color(c);
@@ -169,6 +174,7 @@ if (instance_exists(enemy)) {
                 with (enemy.owner) { instance_destroy(); }
                 with (enemy) {instance_destroy(); }
                 alarm[0] = room_speed * 2; // Next Round
+                exit;
             }
         }
         draw_set_color(c);
@@ -181,7 +187,7 @@ if (instance_exists(enemy)) {
     }
 }
 
-if (instance_exists(GetPlayer() &amp;&amp; !game_win) ){
+if (instance_exists(GetPlayer()) &amp;&amp; !game_win ){
     if (GetPlayer().hp &gt; 0) {
         var x1 = 32;
         var y1 = room_height - 12;
@@ -213,6 +219,30 @@ draw_set_color(c_white);
 draw_set_font(fnt_hud);
 draw_text(room_width - 32, room_height - 12, "Trial " + string(trial));
 draw_set_halign(fa_left);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="9" enumb="89">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Force next round
+alarm[0] = 1;
 </string>
           </argument>
         </arguments>
