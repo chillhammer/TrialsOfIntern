@@ -64,12 +64,15 @@ hsp = 0;
 vsp = 0;
 
 ally = true;
-hp = 100;
+max_hp = 100;
+hp = max_hp;
 
 aim_dir = 0;
 
 deathTimer = 0;
 owner = noone;
+
+colliding_toggle = true;
 
 // Example
 fighterName = "Josh"; // player uses global.fighterPlayerName
@@ -99,9 +102,21 @@ event_perform(ev_other, ev_user0);
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>with (left_arm)
+            <string>/// Destroy Arms &amp; References
+with (left_arm)
     instance_destroy();
 with (right_arm)
+    instance_destroy();
+    
+// ALso in User Event 5
+if (ally) {
+    with (obj_controller) {
+        var index = ds_list_find_index(allies, other);
+        if (index != -1)
+            ds_list_delete(allies, index);
+    }
+}
+with (owner)
     instance_destroy();
 </string>
           </argument>
@@ -133,8 +148,12 @@ if (hurt_timer &lt;= 0)
 
 hsp += i_hor * 0.3 * game_speed;
 
-if (i_hor == 0)
-    hsp /= (1 + 0.1* game_speed);
+if (i_hor == 0) {
+    if (hurt_timer &lt;= 0)
+        hsp /= (1 + 0.1* game_speed);
+    else
+        hsp /= (1 + 0.1* game_speed);
+}
 
 if (aim_x != x &amp;&amp; punch_timer == 0)
     facing = sign(aim_x - x);
@@ -145,7 +164,7 @@ image_yscale = size;
 hurt_timer = max(0, hurt_timer - game_speed);
     
 // Horizontal Collision
-if (place_meeting(x + hsp, y, obj_block) &amp;&amp; !place_meeting(x, y, obj_block)) {
+if (place_meeting(x + hsp, y, obj_block) &amp;&amp; !place_meeting(x, y, obj_block) &amp;&amp; colliding_toggle) {
     x = xprevious;
     x -= hsp;
     hsp = -hsp;
@@ -156,7 +175,7 @@ if (place_meeting(x + hsp, y, obj_block) &amp;&amp; !place_meeting(x, y, obj_blo
 var moveOffset = 0;
 if (input_hor != 0) moveOffset = 0;
 var onGround = instance_place(x, y + 4 + moveOffset, obj_block);
-if (onGround) {
+if (onGround &amp;&amp; colliding_toggle) {
     if (vsp &lt; 0) {
         y = yprevious - vsp;
         vsp = -vsp;
@@ -170,6 +189,9 @@ if (onGround) {
     }
 } else {
     // Gravity
+    if (hurt_timer &gt; 0) {
+        vsp -= 0.1 * game_speed;
+    }
     vsp += 0.4 * game_speed;
     if (vsp &gt; 0)
         vsp += 0.4 * game_speed;
@@ -218,7 +240,7 @@ y += vsp * game_speed;
           <argument>
             <kind>1</kind>
             <string>/// Out of Room
-if (y &gt; room_height) {
+if (y &gt; room_height &amp;&amp; deathTimer &lt;= 0) {
     y = room_height * 0.5;
     x = room_width * 0.5;
 }
@@ -242,12 +264,24 @@ if (y &gt; room_height) {
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>///Death Check
+            <string>///Death Check / TImers
 if (deathTimer &gt; 0) {
     deathTimer += game_speed;
 }
 if (hp &lt;= 0 &amp;&amp; !IsDead(self)) {
     event_perform(ev_other, ev_user5);
+}
+// Ally should just die
+if (ally) {
+    if (deathTimer &gt; room_speed * 1.5) {
+        colliding_toggle = false;
+    }
+
+    if (deathTimer &gt; room_speed * 3) {
+        with (owner)
+            instance_destroy();
+        instance_destroy();
+    }
 }
 </string>
           </argument>
@@ -275,6 +309,15 @@ if (hp &lt;= 0 &amp;&amp; !IsDead(self)) {
 deathTimer = 1;
 with (head) {
     event_perform(ev_other, ev_user0);
+}
+
+// Also in Destroy
+if (ally) {
+    with (obj_controller) {
+        var index = ds_list_find_index(allies, other);
+        if (index != -1)
+            ds_list_delete(allies, index);
+    }
 }
 </string>
           </argument>
@@ -581,18 +624,20 @@ if (punch_timer &gt; 0) {
     //punch_dist *= facing;
 }
 
-if (facing == 1) {
-    right_arm.target_x += lengthdir_x( punch_dist, aim_dir);
-    right_arm.target_y += lengthdir_y( punch_dist, aim_dir);
-    right_arm.image_angle = aim_dir;
-    if (right_arm.image_xscale &lt; 0) right_arm.image_angle += 180;
-    left_arm.image_angle = 0;
-} else {
-    left_arm.target_x += lengthdir_x( punch_dist, aim_dir);
-    left_arm.target_y += lengthdir_y( punch_dist, aim_dir);
-    left_arm.image_angle = aim_dir;
-    if (left_arm.image_xscale &lt; 0) left_arm.image_angle += 180;
-    right_arm.image_angle = 0;
+if (game_speed &gt; 0.1) {
+    if (facing == 1) {
+        right_arm.target_x += lengthdir_x( punch_dist, aim_dir);
+        right_arm.target_y += lengthdir_y( punch_dist, aim_dir);
+        right_arm.image_angle = aim_dir;
+        if (right_arm.image_xscale &lt; 0) right_arm.image_angle += 180;
+        left_arm.image_angle = 0;
+    } else {
+        left_arm.target_x += lengthdir_x( punch_dist, aim_dir);
+        left_arm.target_y += lengthdir_y( punch_dist, aim_dir);
+        left_arm.image_angle = aim_dir;
+        if (left_arm.image_xscale &lt; 0) left_arm.image_angle += 180;
+        right_arm.image_angle = 0;
+    }
 }
 if (facing != abs(left_arm.image_xscale) || facing != abs(right_arm.image_xscale)) {
     //left_arm.x = left_arm.target_x;

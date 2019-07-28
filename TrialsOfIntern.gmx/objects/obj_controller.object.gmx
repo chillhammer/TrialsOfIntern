@@ -106,10 +106,17 @@ enemy = SpawnEnemy(eName, trial);
           <argument>
             <kind>1</kind>
             <string>/// SLow MO
-if (keyboard_check(vk_shift)) {
-    game_speed = 0.25;
+
+// Slow if player dead
+if (IsDead(GetPlayer())) {
+    if (game_speed &gt; 0.25) game_speed = 0.25;
+    game_speed = lerp(game_speed, 0, 0.05);
 } else {
-    game_speed = 1;
+    if (keyboard_check(vk_shift)) {
+        game_speed = 0.25;
+    } else {
+        game_speed = 1;
+    }
 }
 </string>
           </argument>
@@ -134,12 +141,19 @@ if (keyboard_check(vk_shift)) {
           <argument>
             <kind>1</kind>
             <string>/// Draw HUD
-if (instance_exists(enemy)) {
+
+
+for (i = 0; i &lt; ds_list_size(allies); i++) {
+    var f = allies[|i];
+    draw_set_color(c_blue);
+    draw_arrow(f.x, f.y-40, f.x, f.y-28, 32);
+}
+if (instance_exists(enemy) &amp;&amp; !IsDead(GetPlayer())) {
     draw_set_color(c_maroon);
     draw_arrow(enemy.x, enemy.y-40, enemy.x, enemy.y-28, 32);
     
     if (enemy.hp &lt;= 0 &amp;&amp; enemy.deathTimer &gt; room_speed * 1.5) {
-        var b_width = 160;
+        var b_width = 180;
         var b_height = 40;
         var t_height = b_height * 2 + 16;
         var x1 = room_width*0.5 - b_width * 0.5;
@@ -152,6 +166,8 @@ if (instance_exists(enemy)) {
             if (mouse_check_button_pressed(mb_left)) {
                 enemy.ally = true;
                 ds_list_add(allies, enemy);
+                enemy.deathTimer = 0;
+                enemy.hp = enemy.max_hp;
                 enemy = noone;
                 alarm[0] = room_speed * 2; // Next Round
                 exit;
@@ -173,6 +189,7 @@ if (instance_exists(enemy)) {
             if (mouse_check_button_pressed(mb_left)) {
                 with (enemy.owner) { instance_destroy(); }
                 with (enemy) {instance_destroy(); }
+                enemy = noone;
                 alarm[0] = room_speed * 2; // Next Round
                 exit;
             }
@@ -184,6 +201,63 @@ if (instance_exists(enemy)) {
         
         
         draw_set_valign(fa_top);
+    }
+}
+
+if (IsDead(GetPlayer())) {
+    if (GetPlayer().deathTimer &gt; room_speed * 2) {
+        
+        var b_width = 180;
+        var b_height = 40;
+        var n_allies = ds_list_size(obj_controller.allies);
+        var t_height = b_height * (n_allies+1) + 16 * n_allies;
+        var x1 = room_width*0.5 - b_width * 0.5;
+        var x2 = room_width*0.5 + b_width * 0.5;
+        var y1 = room_height * 0.5 - t_height *0.5;
+        var c = c_black;
+        // Brainwash allies
+        for (i = 0; i &lt; n_allies; i++) {
+            var f = obj_controller.allies[|i];
+            if (point_in_rectangle(mouse_x, mouse_y, x1, y1, x2, y1 + b_height)) {
+                c = c_gray;
+                if (mouse_check_button_pressed(mb_left)) {
+                    
+                    with (f) {
+                        with (owner)
+                            instance_destroy();
+                    }
+                    global.fighterPlayerName = f.fighterName;
+                    obj_player_controller.fighter = f;
+                    f.owner = obj_player_controller.id;
+                    f.ally = true; // Just Making Sure
+                    // They shouldn't be dead, perhaps add check here
+                    exit;
+                }
+            }
+            draw_set_color(c);
+            draw_rectangle(x1, y1, x2, y1 + b_height, false);
+            draw_set_color(c_white);
+            draw_set_halign(fa_center);
+            draw_set_valign(fa_middle);
+            draw_set_font(fnt_hud_big);
+            draw_text(room_width *0.5, y1 + b_height * 0.5, "Brainwash " + f.fighterName);
+            y1 += b_height + 16;
+        }
+        y1 += 16;
+        // Restart
+        if (point_in_rectangle(mouse_x, mouse_y, x1, y1, x2, y1 + b_height)) {
+            c = c_gray;
+            if (mouse_check_button_pressed(mb_left)) {
+                game_restart();
+            }
+        }
+        draw_set_color(c);
+        draw_rectangle(x1, y1, x2, y1 + b_height, false);
+        draw_set_color(c_white);
+        draw_set_halign(fa_center);
+        draw_set_valign(fa_middle);
+        draw_set_font(fnt_hud_big);
+        draw_text(room_width *0.5, y1 + b_height * 0.5, "Restart Game");
     }
 }
 

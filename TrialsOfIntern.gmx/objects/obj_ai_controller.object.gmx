@@ -108,27 +108,54 @@ if (activateBehaviorTimer &lt;= 0) {
 
 
 with (fighter) {
-    aim_x = GetPlayer().x;
-    aim_y = y;
-    
-    if (other.freeBehavior) {
-        if (aim_x - x &lt; 0) {
-            // move left
-            event_perform(ev_other, ev_user2);
-        } else if (aim_x - x &gt; 0) {
-            // move right
-            event_perform(ev_other, ev_user1);
-        }
+    var target = GetPlayer();
+    if (ally) target = obj_controller.enemy;
+    if (instance_exists(target)) {
+        aim_x = target.x;
+        aim_y = y;
         
-        if (distance_to_object(GetPlayer()) &lt; 80 * punch_length) {
-            if (other.hitRateTimer &lt;= 0) {
-                event_perform(ev_other, ev_user4);
-                other.hitRateTime = other.hitRateTimer;
-            
+        if (other.freeBehavior &amp;&amp; !IsDead(self) &amp;&amp; instance_exists(target)) {
+            if (aim_x - x &lt; 0) {
+                // move left
+                event_perform(ev_other, ev_user2);
+            } else if (aim_x - x &gt; 0) {
+                // move right
+                event_perform(ev_other, ev_user1);
             }
+            
+            var shouldHit = distance_to_object(target) &lt; 80 * punch_length;
+            // Hit allies along the way
+            if (!ally) {
+                for (i = 0; i &lt; ds_list_size(obj_controller.allies); i++) {
+                    var allyFighter = obj_controller.allies[|i];
+                    if (distance_to_object(allyFighter) &lt; 80 * punch_length) {
+                        if (sign (allyFighter.x - x) == facing) {
+                            shouldHit = true;
+                        }
+                    }
+                }
+            }
+            
+            // Reset Aiming Variables Due to Target Potential Reassignment
+            aim_x = target.x;
+            aim_y = y;
+            
+            if (shouldHit) {
+                if (other.hitRateTimer &lt;= 0) {
+                    event_perform(ev_other, ev_user4);
+                    other.hitRateTime = other.hitRateTimer;
+                
+                }
+            }
+            
+            
+        } else if (!instance_exists(target)) {
+            // Post Win Behaviors
+            input_hor = 0;
+            
+        } else {
+            input_hor = 0;
         }
-        
-        
     } else {
         input_hor = 0;
     }
