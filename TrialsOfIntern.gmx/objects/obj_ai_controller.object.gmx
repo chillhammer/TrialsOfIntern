@@ -30,9 +30,83 @@
 // Spawn enemy
 fighter = instance_create(x, y, obj_fighter);
 
-fighter.fighterName = "Kenneth";
-with (fighter) {
+waitTimer = 0;
+waitTime = room_speed * 0.5;
 
+freeBehavior = false;
+
+activateBehaviorTime = room_speed * 0.5;
+activateBehaviorTimer = 0;
+
+hitRateTime = room_speed * 0.5;
+hitRateTimer = 0;
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="3" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// ARITFICIAL INTELLIGENCE !!!
+
+freeBehavior = true;
+if (waitTimer &gt; 0) {
+    freeBehavior = false;
+}
+show_debug_message(string(activateBehaviorTimer));
+waitTimer = max(0, waitTimer - game_speed);
+activateBehaviorTimer = max(0, activateBehaviorTimer - game_speed);
+
+// Activate behaviors!
+if (activateBehaviorTimer &lt;= 0) {
+    activateBehaviorTimer = activateBehaviorTime;
+    var roll = random(1);
+    if (roll &lt; 0.9 - fighter.intelligence * 0.4) {
+        waitTimer = waitTime;
+    }
+}
+
+
+with (fighter) {
+    aim_x = GetPlayer().x;
+    aim_y = y;
+    
+    if (other.freeBehavior) {
+        if (aim_x - x &lt; 0) {
+            // move left
+            event_perform(ev_other, ev_user2);
+        } else if (aim_x - x &gt; 0) {
+            // move right
+            event_perform(ev_other, ev_user1);
+        }
+        
+        if (distance_to_object(GetPlayer()) &lt; 80 * punch_length) {
+            if (other.hitRateTimer &lt;= 0) {
+                event_perform(ev_other, ev_user4);
+                other.hitRateTime = other.hitRateTimer;
+            
+            }
+        }
+        
+        
+    } else {
+        input_hor = 0;
+    }
 }
 </string>
           </argument>

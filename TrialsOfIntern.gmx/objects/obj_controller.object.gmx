@@ -30,6 +30,55 @@ globalvar game_speed;
 game_speed = 1;
 
 enemy = noone;
+
+allies = ds_list_create();
+
+trial = 0;
+
+remaining_enemies_names = ds_list_create();
+ds_list_copy(remaining_enemies_names, global.fightersNames);
+ds_list_shuffle(remaining_enemies_names);
+
+game_start = false;
+enable_campaign = true;
+
+game_win = false;
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="2" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Next Round
+trial ++;
+
+if (ds_list_empty(remaining_enemies_names)) {
+    // You Win!
+    game_win = true;
+    
+    exit;
+}
+
+var eName = remaining_enemies_names[|0];
+ds_list_delete(remaining_enemies_names, 0);
+
+enemy = SpawnEnemy(eName, trial);
 </string>
           </argument>
         </arguments>
@@ -83,8 +132,87 @@ if (keyboard_check(vk_shift)) {
             <string>/// Draw HUD
 if (instance_exists(enemy)) {
     draw_set_color(c_maroon);
-    draw_arrow(enemy.x, enemy.y+16, enemy.x, enemy.y+30, 32);
+    draw_arrow(enemy.x, enemy.y-40, enemy.x, enemy.y-28, 32);
+    
+    if (enemy.hp &lt;= 0 &amp;&amp; enemy.deathTimer &gt; room_speed * 1.5) {
+        var b_width = 160;
+        var b_height = 40;
+        var t_height = b_height * 2 + 16;
+        var x1 = room_width*0.5 - b_width * 0.5;
+        var x2 = room_width*0.5 + b_width * 0.5;
+        var y1 = room_height * 0.5 - t_height *0.5;
+        var c = c_black;
+        // Hire
+        if (point_in_rectangle(mouse_x, mouse_y, x1, y1, x2, y1 + b_height)) {
+            c = c_gray;
+            if (mouse_check_button_pressed(mb_left)) {
+                enemy.ally = true;
+                ds_list_add(enemy);
+                enemy = noone;
+                alarm[0] = room_speed * 2; // Next Round
+            }
+        }
+        draw_set_color(c);
+        draw_rectangle(x1, y1, x2, y1 + b_height, false);
+        draw_set_color(c_white);
+        draw_set_halign(fa_center);
+        draw_set_valign(fa_middle);
+        draw_set_font(fnt_hud_big);
+        draw_text(room_width *0.5, y1 + b_height * 0.5, "Hire " + enemy.fighterName);
+        
+        // Harvest
+        y1 += b_height + 16;
+        c = c_black;
+        if (point_in_rectangle(mouse_x, mouse_y, x1, y1, x2, y1 + b_height)) {
+            c = c_gray;
+            if (mouse_check_button_pressed(mb_left)) {
+                with (enemy.owner) { instance_destroy(); }
+                with (enemy) {instance_destroy(); }
+                alarm[0] = room_speed * 2; // Next Round
+            }
+        }
+        draw_set_color(c);
+        draw_rectangle(x1, y1, x2, y1 + b_height, false);
+        draw_set_color(c_white);
+        draw_text(room_width *0.5, y1 + b_height * 0.5, "Harvest " + enemy.fighterName);
+        
+        
+        draw_set_valign(fa_top);
+    }
 }
+
+if (instance_exists(GetPlayer() &amp;&amp; !game_win) ){
+    if (GetPlayer().hp &gt; 0) {
+        var x1 = 32;
+        var y1 = room_height - 12;
+        draw_set_color(c_aqua);
+        draw_set_font(fnt_hud);
+        draw_rectangle(x1, y1, x1 + 128 * GetPlayer().hp / 100, y1 + 2, false);
+        draw_rectangle(x1, y1, x1 + 128, y1 + 2, true);
+        draw_set_halign(fa_left);
+        draw_text(x1, y1 - 12, "HP:");
+    } else {
+        draw_set_halign(fa_center);
+        draw_set_font(fnt_hud_big);
+        draw_set_color(c_white);
+        draw_text(room_width * 0.5, room_height - 36, "You failed, intern.");
+    }
+}
+
+// Win
+if (game_win) {
+    draw_set_halign(fa_center);
+    draw_set_font(fnt_hud_big);
+    draw_set_color(c_white);
+    draw_text(room_width * 0.5, room_height - 36, "Your journey is complete, intern.");
+}
+
+// Trial Counter
+draw_set_halign(fa_right);
+draw_set_color(c_white);
+draw_set_font(fnt_hud);
+draw_text(room_width - 32, room_height - 12, "Trial " + string(trial));
+draw_set_halign(fa_left);
 </string>
           </argument>
         </arguments>
@@ -108,7 +236,31 @@ if (instance_exists(enemy)) {
           <argument>
             <kind>1</kind>
             <string>/// SPawn enemy
-enemy = SpawnEnemy("Kenneth");
+enemy = SpawnEnemy("Kenneth", 1);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="9" enumb="82">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Restart
+game_restart();
 </string>
           </argument>
         </arguments>
@@ -132,6 +284,33 @@ enemy = SpawnEnemy("Kenneth");
           <argument>
             <kind>4</kind>
             <string>0</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="9" enumb="1">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Start Game
+if (!game_start &amp;&amp; enable_campaign) {
+    game_start = true;
+    alarm[0] = room_speed;
+}
+</string>
           </argument>
         </arguments>
       </action>

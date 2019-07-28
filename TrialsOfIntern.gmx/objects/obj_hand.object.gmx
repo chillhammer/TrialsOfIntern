@@ -100,10 +100,17 @@ y = lerp(y, target_y, game_speed);
           <argument>
             <kind>1</kind>
             <string>/// Punching Fighter
-if (other.ally != owner.ally &amp;&amp; punching) {
+if (other.ally != owner.ally &amp;&amp; punching &amp;&amp; !owner.punched) {
     var dir = owner.aim_dir;//point_direction(x, y, other.x, other.y);
     other.hsp = lengthdir_x(10, dir);
-    other.vsp = lengthdir_y(10, dir);
+    other.vsp = -7; //lengthdir_y(10, dir);
+    if (y &lt; other.y) {
+        other.vsp = 7;
+    }
+    other.hp -= 10 * owner.hand_size;
+    other.y -= 5;
+    owner.punched = true;
+    other.hurt_timer = other.hurt_time;
 }
 </string>
           </argument>

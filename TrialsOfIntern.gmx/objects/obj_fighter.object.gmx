@@ -40,6 +40,10 @@ punch_dist = 0;
 
 punch_timer = 0;
 punch_time = room_speed * 0.4;
+punch_hit = false;
+
+hurt_timer = 0;
+hurt_time = room_speed * 0.5;
 
 input_hor = 0;
 max_speed_base = 5;
@@ -60,8 +64,11 @@ hsp = 0;
 vsp = 0;
 
 ally = true;
+hp = 100;
 
 aim_dir = 0;
+
+deathTimer = 0;
 
 // Example
 fighterName = "Josh";
@@ -94,28 +101,37 @@ event_perform(ev_other, ev_user0);
             <string>/// Physics
 var i_hor = input_hor;
 
-hsp = clamp(hsp, -max_speed, max_speed);
+if (hurt_timer &lt;= 0)
+    hsp = clamp(hsp, -max_speed, max_speed);
+
 hsp += i_hor * 0.3 * game_speed;
+
 if (i_hor == 0)
     hsp /= (1 + 0.1* game_speed);
 
 if (aim_x != x &amp;&amp; punch_timer == 0)
     facing = sign(aim_x - x);
-image_xscale = facing * abs(image_xscale);
-    
+image_xscale = facing * size;
+image_yscale = size;
 
+// Hurt
+hurt_timer = max(0, hurt_timer - game_speed);
+    
+// Horizontal Collision
 if (place_meeting(x + hsp, y, obj_block) &amp;&amp; !place_meeting(x, y, obj_block)) {
     x = xprevious;
     x -= hsp;
     hsp = -hsp;
     input_hor = -input_hor;
 }
+
+// Vertical Collision
 var moveOffset = 0;
 if (input_hor != 0) moveOffset = 0;
 var onGround = instance_place(x, y + 4 + moveOffset, obj_block);
 if (onGround) {
     if (vsp &lt; 0) {
-        y = yprevious;
+        y = yprevious - vsp;
         vsp = -vsp;
     } else {
         vsp = 0;
@@ -126,6 +142,7 @@ if (onGround) {
         y++;
     }
 } else {
+    // Gravity
     vsp += 0.4 * game_speed;
     if (vsp &gt; 0)
         vsp += 0.4 * game_speed;
@@ -157,8 +174,106 @@ y += vsp * game_speed;
           </argument>
         </arguments>
       </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Out of Room
+if (y &gt; room_height) {
+    y = room_height * 0.5;
+    x = room_width * 0.5;
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>///Death Check
+if (hp &lt;= 0 &amp;&amp; !IsDead(self)) {
+    event_perform(ev_other, ev_user5);
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="15">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Play Death
+deathTimer = 1;
+with (head) {
+    event_perform(ev_other, ev_user0);
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
     </event>
     <event eventtype="7" enumb="14">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Exit it Hurt
+if (hurt_timer &gt; 0 || hp &lt;= 0) exit;
+</string>
+          </argument>
+        </arguments>
+      </action>
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -179,12 +294,35 @@ y += vsp * game_speed;
 punch_timer = punch_time;
 aim_dir = point_direction(x, y, aim_x, aim_y);
 facing = sign(aim_x - x);
+punched = false;
 </string>
           </argument>
         </arguments>
       </action>
     </event>
     <event eventtype="7" enumb="13">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Exit it Hurt
+if (hurt_timer &gt; 0 || hp &lt;= 0) exit;
+</string>
+          </argument>
+        </arguments>
+      </action>
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -226,6 +364,28 @@ y -= 10 * game_speed;
         <arguments>
           <argument>
             <kind>1</kind>
+            <string>/// Exit it Hurt
+if (hurt_timer &gt; 0 || hp &lt;= 0) exit;
+</string>
+          </argument>
+        </arguments>
+      </action>
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
             <string>/// Move Left
 input_hor = -1;
 </string>
@@ -234,6 +394,28 @@ input_hor = -1;
       </action>
     </event>
     <event eventtype="7" enumb="11">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Exit it Hurt
+if (hurt_timer &gt; 0 || hp &lt;= 0) exit;
+</string>
+          </argument>
+        </arguments>
+      </action>
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -304,9 +486,9 @@ head.sprite_index = stats[?"head_spr"];
           <argument>
             <kind>1</kind>
             <string>draw_self();
-left_arm.target_x = x - 24 + (facing == -1) * 6;
+left_arm.target_x = x - 24 * size + (facing == -1) * 6 * size;
 left_arm.target_y = y;
-right_arm.target_x = x + 24 - (facing == 1) * 6;;
+right_arm.target_x = x + 24 * size - (facing == 1) * 6 * size;;
 right_arm.target_y = y;
 
 
@@ -314,14 +496,17 @@ if (punch_timer == 0)
     aim_dir = point_direction(x, y, aim_x, aim_y);
 
 // Head Bob
-head.y = y - 10 + sin(current_time / 50)* 1;
-head.x = x;
-head.image_xscale = size * facing * head_size
-with (head) {
-    draw_self();
-    image_angle = other.aim_dir;
-    //image_angle = point_direction(x, y, other.aim_x, other.aim_y);;
-    if (image_xscale &lt; 0) image_angle += 180;
+if (!IsDead(self)) {
+    head.y = y - 10 * size + sin(current_time / 50)* 1 * size;
+    head.x = x;
+    head.image_xscale = size * facing * head_size;
+    head.image_yscale = size * head_size;
+    with (head) {
+        draw_self();
+        image_angle = other.aim_dir;
+        //image_angle = point_direction(x, y, other.aim_x, other.aim_y);;
+        if (image_xscale &lt; 0) image_angle += 180;
+    }
 }
 
 // Feet
@@ -351,7 +536,7 @@ draw_sprite_ext(spr_foot_right, skinType, r_foot_x, r_foot_y, size * facing, siz
 right_arm.punching = false;
 left_arm.punching = false;
 
-if (punch_timer != 0) {
+if (punch_timer &gt; 0) {
     punch_timer -= game_speed;
     var perc = abs(punch_time - punch_timer) / punch_time;
     if (perc &lt; 0.4) {
