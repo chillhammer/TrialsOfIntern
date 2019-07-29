@@ -18,10 +18,13 @@
     <sprite>sprites\spr_steph_head</sprite>
     <sprite>sprites\spr_ana_head</sprite>
     <sprite>sprites\spr_andrew_head</sprite>
+    <sprite>sprites\spr_cursor</sprite>
+    <sprite>sprites\spr_ambria_head</sprite>
   </sprites>
   <backgrounds name="background">
     <background>background\bg_background</background>
     <background>background\bg_spotlights</background>
+    <background>background\bg_frontend</background>
   </backgrounds>
   <paths name="paths"/>
   <scripts name="scripts">
@@ -46,9 +49,11 @@
     <object>objects\obj_player_controller</object>
     <object>objects\obj_controller</object>
     <object>objects\obj_ai_controller</object>
+    <object>objects\obj_frontend</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\rm_init</room>
+    <room>rooms\rm_frontend</room>
     <room>rooms\rm_fighting</room>
   </rooms>
   <constants number="3">

@@ -56,6 +56,9 @@ size = 1;
 head_size = 1;
 hand_size = 1;
 punch_length = 1;
+punch_speed = 1;
+
+rof = 1;
 
 aim_x = 0;
 aim_y = 0;
@@ -73,6 +76,8 @@ deathTimer = 0;
 owner = noone;
 
 colliding_toggle = true;
+
+harvested = false;
 
 // Example
 fighterName = "Josh"; // player uses global.fighterPlayerName
@@ -124,6 +129,42 @@ with (owner)
       </action>
     </event>
     <event eventtype="3" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>/// Harvested
+if (harvested) {
+    x = lerp(x, GetPlayer().x, 0.05 * game_speed);
+    y = lerp(y, GetPlayer().y, 0.05 * game_speed);
+    size = max(0, size - 0.02 * game_speed);
+    if (size &lt; 0.03) { 
+        var p = GetPlayer();
+        p.size += 0.1;
+        p.punch_length += 0.15;
+        p.punch_time -= 0.15;
+        p.max_hp += 20;
+        p.hp = p.max_hp;
+        instance_destroy(); 
+    }
+    exit;
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
       <action>
         <libid>1</libid>
         <id>603</id>
@@ -240,7 +281,7 @@ y += vsp * game_speed;
           <argument>
             <kind>1</kind>
             <string>/// Out of Room
-if (y &gt; room_height &amp;&amp; deathTimer &lt;= 0) {
+if ((y &gt; room_height || y &lt; 0) &amp;&amp; deathTimer &lt;= 0) {
     y = room_height * 0.5;
     x = room_width * 0.5;
 }
@@ -307,6 +348,16 @@ if (ally) {
             <kind>1</kind>
             <string>/// Play Death
 deathTimer = 1;
+
+// Reassigning enemy\
+/*
+with (obj_fighter) {
+    if (id != GetPlayer() &amp;&amp; ds_list_find_index(obj_controller.allies, id) == -1) {
+    
+    }
+}
+*/
+
 with (head) {
     event_perform(ev_other, ev_user0);
 }
@@ -534,6 +585,7 @@ stats = global.fighters[?fighterName];
 size = stats[?"size"];
 head_size = stats[?"head_size"];
 hand_size = stats[?"hand_size"];
+rof = stats[?"rof"];
 
 head.sprite_index = stats[?"head_spr"];
 </string>
@@ -558,8 +610,8 @@ head.sprite_index = stats[?"head_spr"];
         <arguments>
           <argument>
             <kind>1</kind>
-            <string>draw_self();
-left_arm.target_x = x - 24 * size + (facing == -1) * 6 * size;
+            <string>draw_sprite_ext(sprite_index, image_index, x, y, image_xscale * size, image_yscale * size, image_angle, c_white, image_alpha);
+left_arm.target_x = x - 24 * size+ (facing == -1) * 6 * size;
 left_arm.target_y = y;
 right_arm.target_x = x + 24 * size - (facing == 1) * 6 * size;;
 right_arm.target_y = y;
@@ -611,7 +663,7 @@ left_arm.punching = false;
 
 if (punch_timer &gt; 0) {
     punch_timer -= game_speed;
-    var perc = abs(punch_time - punch_timer) / punch_time;
+    var perc = abs(punch_time - punch_timer) / (punch_time);
     if (perc &lt; 0.4) {
         punch_dist = lerp(0, 80 * punch_length, perc / 0.4);
         if (facing == 1) 
